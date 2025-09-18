@@ -11,7 +11,7 @@ T = TypeVar("T")
 P = ParamSpec("P")
 
 
-def async_timeout(seconds: int) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
+class async_timeout:  # pylint: disable=invalid-name
     """Async Timeout decorator.
 
     This decorator wraps an asynchronous function and ensures it does not run for
@@ -23,24 +23,19 @@ def async_timeout(seconds: int) -> Callable[[Callable[P, Awaitable[T]]], Callabl
     seconds : int
         The maximum allowed time (in seconds) for the asynchronous function to complete.
 
-    Returns
-    -------
-    Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]
-        A decorator that, when applied to an async function, ensures the function
-        completes within the specified time limit. If the function takes too long,
-        an ``AsyncTimeoutError`` is raised.
-
     """
 
-    def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
+    def __init__(self, seconds: int):
+        self.seconds = seconds
+
+    def __call__(self, func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
         @functools.wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+            timeout = kwargs.get("timeout", self.seconds)
             try:
-                return await asyncio.wait_for(func(*args, **kwargs), timeout=seconds)
+                return await asyncio.wait_for(func(*args, **kwargs), timeout=timeout)
             except asyncio.TimeoutError as exc:
-                msg = f"Operation timed out after {seconds} seconds"
+                msg = f"Operation timed out after {timeout} seconds"
                 raise AsyncTimeoutError(msg) from exc
 
         return wrapper
-
-    return decorator

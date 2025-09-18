@@ -120,7 +120,7 @@ async def ensure_git_installed() -> None:
             pass
 
 
-async def check_repo_exists(url: str, token: str | None = None) -> bool:
+async def check_repo_exists(url: str, token: str | None = None, timeout: int = 10) -> bool:
     """Check whether a remote Git repository is reachable.
 
     Parameters
@@ -129,6 +129,8 @@ async def check_repo_exists(url: str, token: str | None = None) -> bool:
         URL of the Git repository to check.
     token : str | None
         GitHub personal access token (PAT) for accessing private repositories.
+    timeout : int
+        Timeout for the git command.
 
     Returns
     -------
@@ -138,8 +140,8 @@ async def check_repo_exists(url: str, token: str | None = None) -> bool:
     """
     try:
         # Try to resolve HEAD - if repo exists, this will work
-        await _resolve_ref_to_sha(url, "HEAD", token=token)
-    except (ValueError, Exception):
+        await asyncio.wait_for(_resolve_ref_to_sha(url, "HEAD", token=token), timeout=timeout)
+    except (ValueError, asyncio.TimeoutError, Exception):
         # Repository doesn't exist, is private without proper auth, or other error
         return False
 
