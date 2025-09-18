@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Union
 
 from pydantic import BaseModel, Field, field_validator
 
+from gitingest.config import DEFAULT_TIMEOUT, MAX_FILES, MAX_TOTAL_SIZE_BYTES
 from gitingest.utils.compat_func import removesuffix
 from server.server_config import MAX_FILE_SIZE_KB
 
@@ -42,6 +43,11 @@ class IngestRequest(BaseModel):
 
     input_text: str = Field(..., description="Git repository URL or slug to ingest")
     max_file_size: int = Field(..., ge=1, le=MAX_FILE_SIZE_KB, description="File size in KB")
+    max_files: int = Field(default=MAX_FILES, description="Maximum number of files to process")
+    max_total_size_bytes: int = Field(
+        default=MAX_TOTAL_SIZE_BYTES, description="Maximum total size of files to process in bytes"
+    )
+    timeout: int = Field(default=DEFAULT_TIMEOUT, description="Timeout for cloning repositories in seconds")
     pattern_type: PatternType = Field(default=PatternType.EXCLUDE, description="Pattern type for file filtering")
     pattern: str = Field(default="", description="Glob/regex pattern for file filtering")
     token: str | None = Field(default=None, description="GitHub PAT for private repositories")

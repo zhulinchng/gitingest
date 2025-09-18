@@ -20,6 +20,9 @@ COMMON_INGEST_RESPONSES: dict[int | str, dict[str, Any]] = {
 async def _perform_ingestion(
     input_text: str,
     max_file_size: int,
+    max_files: int,
+    max_total_size_bytes: int,
+    timeout: int,
     pattern_type: str,
     pattern: str,
     token: str | None,
@@ -34,6 +37,9 @@ async def _perform_ingestion(
         result = await process_query(
             input_text=input_text,
             max_file_size=max_file_size,
+            max_files=max_files,
+            max_total_size_bytes=max_total_size_bytes,
+            timeout=timeout,
             pattern_type=pattern_type,
             pattern=pattern,
             token=token,

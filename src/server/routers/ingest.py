@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from prometheus_client import Counter
 
-from gitingest.config import TMP_BASE_PATH
+from gitingest.config import DEFAULT_TIMEOUT, MAX_FILES, MAX_TOTAL_SIZE_BYTES, TMP_BASE_PATH
 from server.models import IngestRequest
 from server.routers_utils import COMMON_INGEST_RESPONSES, _perform_ingestion
 from server.s3_utils import is_s3_enabled
@@ -43,6 +43,9 @@ async def api_ingest(
     response = await _perform_ingestion(
         input_text=ingest_request.input_text,
         max_file_size=ingest_request.max_file_size,
+        max_files=ingest_request.max_files,
+        max_total_size_bytes=ingest_request.max_total_size_bytes,
+        timeout=ingest_request.timeout,
         pattern_type=ingest_request.pattern_type.value,
         pattern=ingest_request.pattern,
         token=ingest_request.token,
@@ -59,6 +62,9 @@ async def api_ingest_get(
     user: str,
     repository: str,
     max_file_size: int = DEFAULT_FILE_SIZE_KB,
+    max_files: int = MAX_FILES,
+    max_total_size_bytes: int = MAX_TOTAL_SIZE_BYTES,
+    timeout: int = DEFAULT_TIMEOUT,
     pattern_type: str = "exclude",
     pattern: str = "",
     token: str = "",
@@ -75,6 +81,9 @@ async def api_ingest_get(
 
     **Query Parameters**
     - **max_file_size** (`int`, optional): Maximum file size in KB to include in the digest (default: 5120 KB)
+    - **max_files** (`int`, optional): Maximum number of files to process (default: 10,000)
+    - **max_total_size_bytes** (`int`, optional): Maximum total size of files to process in bytes (default: 500 MB)
+    - **timeout** (`int`, optional): Timeout for cloning repositories in seconds (default: 60)
     - **pattern_type** (`str`, optional): Type of pattern to use ("include" or "exclude", default: "exclude")
     - **pattern** (`str`, optional): Pattern to include or exclude in the query (default: "")
     - **token** (`str`, optional): GitHub personal access token for private repositories (default: "")
@@ -85,6 +94,9 @@ async def api_ingest_get(
     response = await _perform_ingestion(
         input_text=f"{user}/{repository}",
         max_file_size=max_file_size,
+        max_files=max_files,
+        max_total_size_bytes=max_total_size_bytes,
+        timeout=timeout,
         pattern_type=pattern_type,
         pattern=pattern,
         token=token or None,

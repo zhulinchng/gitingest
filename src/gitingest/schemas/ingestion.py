@@ -7,7 +7,7 @@ from uuid import UUID  # noqa: TC003 (typing-only-standard-library-import) neede
 
 from pydantic import BaseModel, Field
 
-from gitingest.config import MAX_FILE_SIZE
+from gitingest.config import MAX_FILES, MAX_FILE_SIZE, MAX_TOTAL_SIZE_BYTES
 from gitingest.schemas.cloning import CloneConfig
 
 
@@ -42,6 +42,10 @@ class IngestionQuery(BaseModel):  # pylint: disable=too-many-instance-attributes
         The tag of the repository.
     max_file_size : int
         The maximum file size to ingest in bytes (default: 10 MB).
+    max_files : int
+        The maximum number of files to process (default: 10,000).
+    max_total_size_bytes : int
+        The maximum size of the output file in bytes (default: 500 MB).
     ignore_patterns : set[str]
         The patterns to ignore (default: ``set()``).
     include_patterns : set[str] | None
@@ -66,6 +70,8 @@ class IngestionQuery(BaseModel):  # pylint: disable=too-many-instance-attributes
     commit: str | None = None
     tag: str | None = None
     max_file_size: int = Field(default=MAX_FILE_SIZE)
+    max_files: int = Field(default=MAX_FILES)
+    max_total_size_bytes: int = Field(default=MAX_TOTAL_SIZE_BYTES)
     ignore_patterns: set[str] = Field(default_factory=set)  # TODO: ssame type for ignore_* and include_* patterns
     include_patterns: set[str] | None = None
     include_submodules: bool = Field(default=False)

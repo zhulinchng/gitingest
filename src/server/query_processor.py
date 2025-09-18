@@ -229,6 +229,9 @@ def _generate_digest_url(query: IngestionQuery) -> str:
 async def process_query(
     input_text: str,
     max_file_size: int,
+    max_files: int,
+    max_total_size_bytes: int,
+    timeout: int,
     pattern_type: PatternType,
     pattern: str,
     token: str | None = None,
@@ -273,6 +276,8 @@ async def process_query(
 
     query.url = cast("str", query.url)
     query.max_file_size = max_file_size * 1024  # Convert to bytes since we currently use KB in higher levels
+    query.max_files = max_files
+    query.max_total_size_bytes = max_total_size_bytes
     query.ignore_patterns, query.include_patterns = process_patterns(
         exclude_patterns=pattern if pattern_type == PatternType.EXCLUDE else None,
         include_patterns=pattern if pattern_type == PatternType.INCLUDE else None,
@@ -291,7 +296,7 @@ async def process_query(
         return s3_response
 
     clone_config = query.extract_clone_config()
-    await clone_repo(clone_config, token=token)
+    await clone_repo(clone_config, token=token, timeout=timeout)
 
     short_repo_url = f"{query.user_name}/{query.repo_name}"
 

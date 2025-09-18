@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, AsyncGenerator, Callable
 from urllib.parse import urlparse
 
 from gitingest.clone import clone_repo
-from gitingest.config import MAX_FILE_SIZE
+from gitingest.config import DEFAULT_TIMEOUT, MAX_FILES, MAX_FILE_SIZE, MAX_TOTAL_SIZE_BYTES
 from gitingest.ingestion import ingest_query
 from gitingest.query_parser import parse_local_dir_path, parse_remote_repo
 from gitingest.utils.auth import resolve_token
@@ -36,6 +36,9 @@ async def ingest_async(
     source: str,
     *,
     max_file_size: int = MAX_FILE_SIZE,
+    max_files: int = MAX_FILES,
+    max_total_size_bytes: int = MAX_TOTAL_SIZE_BYTES,
+    timeout: int = DEFAULT_TIMEOUT,
     include_patterns: str | set[str] | None = None,
     exclude_patterns: str | set[str] | None = None,
     branch: str | None = None,
@@ -57,6 +60,12 @@ async def ingest_async(
         The source to analyze, which can be a URL (for a Git repository) or a local directory path.
     max_file_size : int
         Maximum allowed file size for file ingestion. Files larger than this size are ignored (default: 10 MB).
+    max_files : int
+        Maximum number of files to process (default: 10,000).
+    max_total_size_bytes : int
+        Maximum size of the output file in bytes (default: 500 MB).
+    timeout : int
+        Timeout for the ingestion process in seconds (default: 60).
     include_patterns : str | set[str] | None
         Pattern or set of patterns specifying which files to include. If ``None``, all files are included.
     exclude_patterns : str | set[str] | None
@@ -106,6 +115,8 @@ async def ingest_async(
         query = parse_local_dir_path(source)
 
     query.max_file_size = max_file_size
+    query.max_files = max_files
+    query.max_total_size_bytes = max_total_size_bytes
     query.ignore_patterns, query.include_patterns = process_patterns(
         exclude_patterns=exclude_patterns,
         include_patterns=include_patterns,
@@ -127,7 +138,7 @@ async def ingest_async(
         },
     )
 
-    async with _clone_repo_if_remote(query, token=token):
+    async with _clone_repo_if_remote(query, token=token, timeout=timeout):
         if query.url:
             logger.info("Repository cloned, starting file processing")
         else:
@@ -152,6 +163,9 @@ def ingest(
     source: str,
     *,
     max_file_size: int = MAX_FILE_SIZE,
+    max_files: int = MAX_FILES,
+    max_total_size_bytes: int = MAX_TOTAL_SIZE_BYTES,
+    timeout: int = DEFAULT_TIMEOUT,
     include_patterns: str | set[str] | None = None,
     exclude_patterns: str | set[str] | None = None,
     branch: str | None = None,
@@ -173,6 +187,12 @@ def ingest(
         The source to analyze, which can be a URL (for a Git repository) or a local directory path.
     max_file_size : int
         Maximum allowed file size for file ingestion. Files larger than this size are ignored (default: 10 MB).
+    max_files : int
+        Maximum number of files to process (default: 10,000).
+    max_total_size_bytes : int
+        Maximum size of the output file in bytes (default: 500 MB).
+    timeout : int
+        Timeout for the ingestion process in seconds (default: 60).
     include_patterns : str | set[str] | None
         Pattern or set of patterns specifying which files to include. If ``None``, all files are included.
     exclude_patterns : str | set[str] | None
@@ -210,6 +230,9 @@ def ingest(
         ingest_async(
             source=source,
             max_file_size=max_file_size,
+            max_files=max_files,
+            max_total_size_bytes=max_total_size_bytes,
+            timeout=timeout,
             include_patterns=include_patterns,
             exclude_patterns=exclude_patterns,
             branch=branch,
@@ -273,7 +296,7 @@ def _apply_gitignores(query: IngestionQuery) -> None:
 
 
 @asynccontextmanager
-async def _clone_repo_if_remote(query: IngestionQuery, *, token: str | None) -> AsyncGenerator[None]:
+async def _clone_repo_if_remote(query: IngestionQuery, *, token: str | None, timeout: int) -> AsyncGenerator[None]:
     """Async context-manager that clones ``query.url`` if present.
 
     If ``query.url`` is set, the repo is cloned, control is yielded, and the temp directory is removed on exit.
@@ -295,7 +318,7 @@ async def _clone_repo_if_remote(query: IngestionQuery, *, token: str | None) -> 
 
     if query.url:
         clone_config = query.extract_clone_config()
-        await clone_repo(clone_config, token=token)
+        await clone_repo(clone_config, token=token, timeout=timeout)
         try:
             yield
         finally:

@@ -9,7 +9,7 @@ from typing import TypedDict
 import click
 from typing_extensions import Unpack
 
-from gitingest.config import MAX_FILE_SIZE, OUTPUT_FILE_NAME
+from gitingest.config import DEFAULT_TIMEOUT, MAX_FILES, MAX_FILE_SIZE, MAX_TOTAL_SIZE_BYTES, OUTPUT_FILE_NAME
 from gitingest.entrypoint import ingest_async
 
 # Import logging configuration first to intercept all logging
@@ -22,6 +22,9 @@ logger = get_logger(__name__)
 class _CLIArgs(TypedDict):
     source: str
     max_size: int
+    max_files: int
+    max_total_size: int
+    timeout: int
     exclude_pattern: tuple[str, ...]
     include_pattern: tuple[str, ...]
     branch: str | None
@@ -39,6 +42,24 @@ class _CLIArgs(TypedDict):
     default=MAX_FILE_SIZE,
     show_default=True,
     help="Maximum file size to process in bytes",
+)
+@click.option(
+    "--max-files",
+    default=MAX_FILES,
+    show_default=True,
+    help="Maximum number of files to process",
+)
+@click.option(
+    "--max-total-size",
+    default=MAX_TOTAL_SIZE_BYTES,
+    show_default=True,
+    help="Maximum total size of files to process in bytes",
+)
+@click.option(
+    "--timeout",
+    default=DEFAULT_TIMEOUT,
+    show_default=True,
+    help="Timeout for cloning repositories in seconds",
 )
 @click.option("--exclude-pattern", "-e", multiple=True, help="Shell-style patterns to exclude.")
 @click.option(
@@ -118,6 +139,9 @@ async def _async_main(
     source: str,
     *,
     max_size: int = MAX_FILE_SIZE,
+    max_files: int = MAX_FILES,
+    max_total_size: int = MAX_TOTAL_SIZE_BYTES,
+    timeout: int = DEFAULT_TIMEOUT,
     exclude_pattern: tuple[str, ...] | None = None,
     include_pattern: tuple[str, ...] | None = None,
     branch: str | None = None,
@@ -138,6 +162,12 @@ async def _async_main(
         A directory path or a Git repository URL.
     max_size : int
         Maximum file size in bytes to ingest (default: 10 MB).
+    max_files : int
+        Maximum number of files to process (default: 10,000).
+    max_total_size : int
+        Maximum total size of files to process in bytes (default: 500 MB).
+    timeout : int
+        Timeout for cloning repositories in seconds (default: 60).
     exclude_pattern : tuple[str, ...] | None
         Glob patterns for pruning the file set.
     include_pattern : tuple[str, ...] | None
@@ -176,6 +206,9 @@ async def _async_main(
         summary, _, _ = await ingest_async(
             source,
             max_file_size=max_size,
+            max_files=max_files,
+            max_total_size_bytes=max_total_size,
+            timeout=timeout,
             include_patterns=include_patterns,
             exclude_patterns=exclude_patterns,
             branch=branch,

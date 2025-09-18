@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from gitingest.config import MAX_DIRECTORY_DEPTH, MAX_FILES, MAX_TOTAL_SIZE_BYTES
+from gitingest.config import MAX_DIRECTORY_DEPTH
 from gitingest.output_formatter import format_node
 from gitingest.schemas import FileSystemNode, FileSystemNodeType, FileSystemStats
 from gitingest.utils.ingestion_utils import _should_exclude, _should_include
@@ -136,7 +136,7 @@ def _process_node(node: FileSystemNode, query: IngestionQuery, stats: FileSystem
         Statistics tracking object for the total file count and size.
 
     """
-    if limit_exceeded(stats, depth=node.depth):
+    if limit_exceeded(stats, depth=node.depth, query=query):
         return
 
     for sub_path in node.path.iterdir():
@@ -159,7 +159,7 @@ def _process_node(node: FileSystemNode, query: IngestionQuery, stats: FileSystem
                     },
                 )
                 continue
-            _process_file(path=sub_path, parent_node=node, stats=stats, local_path=query.local_path)
+            _process_file(path=sub_path, parent_node=node, stats=stats, local_path=query.local_path, query=query)
         elif sub_path.is_dir():
             child_directory_node = FileSystemNode(
                 name=sub_path.name,
@@ -213,7 +213,7 @@ def _process_symlink(path: Path, parent_node: FileSystemNode, stats: FileSystemS
     parent_node.file_count += 1
 
 
-def _process_file(path: Path, parent_node: FileSystemNode, stats: FileSystemStats, local_path: Path) -> None:
+def _process_file(path: Path, parent_node: FileSystemNode, stats: FileSystemStats, local_path: Path, query: IngestionQuery) -> None:
     """Process a file in the file system.
 
     This function checks the file's size, increments the statistics, and reads its content.
@@ -231,26 +231,26 @@ def _process_file(path: Path, parent_node: FileSystemNode, stats: FileSystemStat
         The base path of the repository or directory being processed.
 
     """
-    if stats.total_files + 1 > MAX_FILES:
+    if stats.total_files + 1 > query.max_files:
         logger.warning(
             "Maximum file limit reached",
             extra={
                 "current_files": stats.total_files,
-                "max_files": MAX_FILES,
+                "max_files": query.max_files,
                 "file_path": str(path),
             },
         )
         return
 
     file_size = path.stat().st_size
-    if stats.total_size + file_size > MAX_TOTAL_SIZE_BYTES:
+    if stats.total_size + file_size > query.max_total_size_bytes:
         logger.warning(
             "Skipping file: would exceed total size limit",
             extra={
                 "file_path": str(path),
                 "file_size": file_size,
                 "current_total_size": stats.total_size,
-                "max_total_size": MAX_TOTAL_SIZE_BYTES,
+                "max_total_size": query.max_total_size_bytes,
             },
         )
         return
@@ -273,7 +273,7 @@ def _process_file(path: Path, parent_node: FileSystemNode, stats: FileSystemStat
     parent_node.file_count += 1
 
 
-def limit_exceeded(stats: FileSystemStats, depth: int) -> bool:
+def limit_exceeded(stats: FileSystemStats, depth: int, query: IngestionQuery) -> bool:
     """Check if any of the traversal limits have been exceeded.
 
     This function checks if the current traversal has exceeded any of the configured limits:
@@ -302,22 +302,22 @@ def limit_exceeded(stats: FileSystemStats, depth: int) -> bool:
         )
         return True
 
-    if stats.total_files >= MAX_FILES:
+    if stats.total_files >= query.max_files:
         logger.warning(
             "Maximum file limit reached",
             extra={
                 "current_files": stats.total_files,
-                "max_files": MAX_FILES,
+                "max_files": query.max_files,
             },
         )
         return True  # TODO: end recursion
 
-    if stats.total_size >= MAX_TOTAL_SIZE_BYTES:
+    if stats.total_size >= query.max_total_size_bytes:
         logger.warning(
             "Maximum total size limit reached",
             extra={
                 "current_size_mb": stats.total_size / 1024 / 1024,
-                "max_size_mb": MAX_TOTAL_SIZE_BYTES / 1024 / 1024,
+                "max_size_mb": query.max_total_size_bytes / 1024 / 1024,
             },
         )
         return True  # TODO: end recursion

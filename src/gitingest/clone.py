@@ -29,7 +29,7 @@ logger = get_logger(__name__)
 
 
 @async_timeout(DEFAULT_TIMEOUT)
-async def clone_repo(config: CloneConfig, *, token: str | None = None) -> None:
+async def clone_repo(config: CloneConfig, *, token: str | None = None, timeout: int = DEFAULT_TIMEOUT) -> None:
     """Clone a repository to a local path based on the provided configuration.
 
     This function handles the process of cloning a Git repository to the local file system.
@@ -77,7 +77,7 @@ async def clone_repo(config: CloneConfig, *, token: str | None = None) -> None:
     await ensure_directory_exists_or_create(Path(local_path).parent)
 
     logger.debug("Checking if repository exists", extra={"url": url})
-    if not await check_repo_exists(url, token=token):
+    if not await check_repo_exists(url, token=token, timeout=timeout):
         logger.error("Repository not found", extra={"url": url})
         msg = "Repository not found. Make sure it is public or that you have provided a valid token."
         raise ValueError(msg)
