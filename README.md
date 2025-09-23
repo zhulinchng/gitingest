@@ -6,8 +6,8 @@
 <!-- markdownlint-disable MD033 -->
 <p align="center">
   <!-- row 1 — install & compat -->
-  <a href="https://pypi.org/project/gitingest"><img src="https://img.shields.io/pypi/v/gitingest.svg" alt="PyPI"></a>
-  <a href="https://pypi.org/project/gitingest"><img src="https://img.shields.io/pypi/pyversions/gitingest.svg" alt="Python Versions"></a>
+  <a href="https://pypi.org/project/gitingest-zhulinchng"><img src="https://img.shields.io/pypi/v/gitingest-zhulinchng.svg" alt="PyPI"></a>
+  <a href="https://pypi.org/project/gitingest-zhulinchng"><img src="https://img.shields.io/pypi/pyversions/gitingest-zhulinchng.svg" alt="Python Versions"></a>
   <br>
   <!-- row 2 — quality & community -->
   <a href="https://github.com/coderamp-labs/gitingest/actions/workflows/ci.yml?query=branch%3Amain"><img src="https://github.com/coderamp-labs/gitingest/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
@@ -16,7 +16,7 @@
   <a href="https://scorecard.dev/viewer/?uri=github.com/coderamp-labs/gitingest"><img src="https://api.scorecard.dev/projects/github.com/coderamp-labs/gitingest/badge" alt="OpenSSF Scorecard"></a>
   <br>
   <a href="https://github.com/coderamp-labs/gitingest/blob/main/LICENSE"><img src="https://img.shields.io/github/license/coderamp-labs/gitingest.svg" alt="License"></a>
-  <a href="https://pepy.tech/project/gitingest"><img src="https://pepy.tech/badge/gitingest" alt="Downloads"></a>
+  <a href="https://pepy.tech/project/gitingest-zhulinchng"><img src="https://pepy.tech/badge/gitingest-zhulinchng" alt="Downloads"></a>
   <a href="https://github.com/coderamp-labs/gitingest"><img src="https://img.shields.io/github/stars/coderamp-labs/gitingest" alt="GitHub Stars"></a>
   <a href="https://discord.com/invite/zerRaGK9EC"><img src="https://img.shields.io/badge/Discord-Join_chat-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
   <br>
@@ -59,17 +59,17 @@ You can also replace `hub` with `ingest` in any GitHub URL to access the corresp
 
 ### 📦 Installation
 
-Gitingest is available on [PyPI](https://pypi.org/project/gitingest/).
+Gitingest is available on [PyPI](https://pypi.org/project/gitingest-zhulinchng/).
 You can install it using `pip`:
 
 ```bash
-pip install gitingest
+pip install gitingest-zhulinchng
 ```
 
 or
 
 ```bash
-pip install gitingest[server]
+pip install gitingest-zhulinchng[server]
 ```
 
 to include server dependencies for self-hosting.
@@ -92,7 +92,7 @@ pipx ensurepath
 
 ```bash
 # install gitingest
-pipx install gitingest
+pipx install gitingest-zhulinchng
 ```
 
 ## 🧩 Browser Extension Usage
